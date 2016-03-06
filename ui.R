@@ -63,7 +63,9 @@ shinyUI(fluidPage(
 		 inline=TRUE
        ),
 	  helpText("The calculation choices for standard error calculation for the weighted mean are taken from this 1995 paper by Donald Gatz and Luther Smith:", a("http://www.cs.tufts.edu/~nr/cs257/archive/donald-gatz/weighted-standard-error.pdf", href="http://www.cs.tufts.edu/~nr/cs257/archive/donald-gatz/weighted-standard-error.pdf"))
-    )
+    ),
   ),
+  h6(a(img(src="github_logo.png", height="20px"), 
+	 "Source code available on Github", href="https://github.com/doug-friedman/adam_app")),
   includeCSS("whoi.css")
 ))
