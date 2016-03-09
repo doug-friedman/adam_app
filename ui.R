@@ -30,19 +30,33 @@ shinyUI(fluidPage(
 		
 	  numericInput(
 	    inputId = "weight_col",
-        label = "Which column contains the weights?",
+        label = "Which column contains the error?",
 		value = 2),		  
-	 
-	  numericInput(
-	    inputId = "skip_val",
-        label = "What is the first row with data?",
-		value = 0),	
-	 
+	  
+	  radioButtons(
+	     inputId = "weight_calc",
+		 label = "How should the weights be calculated from the error?",
+		 choices = c("No Calculation"="None", "Inverse of the Square Root (1/SQRT)"="InvSqrt"),
+		 selected = "None"
+      ),
+	  
+	  br(),
+	  
 	  checkboxInput(
 	     inputId = "header",
 		 label = "My file has column names.",
 		 value = TRUE
        ),
+	  
+	  conditionalPanel(
+	    condition = "!input.header",
+	    numericInput(
+	      inputId = "skip_val",
+          label = "What is the first row with data?",
+		  value = 0)	
+	  ),
+	 
+	  
 	   
 	  br(), 	  
 	  
