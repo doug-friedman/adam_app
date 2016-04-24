@@ -1264,7 +1264,7 @@ table thead tr th, table tfoot tr th, table tfoot tr td, table tbody tr th, tabl
     color: #8dc7f0; 
 }
 
-#bg-multimedia .container .row {margin:1em auto;}
+/* #bg-multimedia .container .row {margin:1em auto;}
 #bg-multimedia .container .multi-item {
 	background:#031c33;
 	text-align:center;
@@ -1299,7 +1299,7 @@ table thead tr th, table tfoot tr th, table tfoot tr td, table tbody tr th, tabl
  padding-left: 1.75em;
  text-indent: -1em;}
 #bg-multimedia .container .multi-item  ul li:before {
- content: "\0BB \020";color:#fff; font-size:1em;}
+ content: "\0BB \020";color:#fff; font-size:1em;} */
 
 #bg-multimedia .container .button a,
 #bg-multimedia .image-disclaimer .button a {color:#fff; text-transform:uppercase;letter-spacing:.1em;margin-top:1em;}
@@ -3447,4 +3447,18 @@ input[type="text"] {margin:0;}
 section.top-bar-section.hidden-for-medium-up {margin-top: 0em;}
 
 
+}
+
+
+/* My additions */
+.container {
+    margin-left: unset !important; 
+}
+
+nav.navbar.navbar-default.navbar-static-top, .navbar {
+    margin-bottom: 10px !important;
+} 
+
+h4 {
+	color: "blue" !important;
 }

@@ -1,0 +1,20 @@
+/* WHOI CSS */
+h2, h3, span, label, input {
+    font-family: 'Open Sans Condensed', sans-serif !important;
+    font-style: normal !important;
+    /*font-weight: 700 !important;*/
+    letter-spacing: .01em !important;
+}
+
+/* My additions */
+.container {
+    margin-left: unset !important; 
+}
+
+nav.navbar.navbar-default.navbar-static-top, .navbar {
+    margin-bottom: 10px !important;
+} 
+
+.well {
+  background-color: #ebedf3 !important;	
+}

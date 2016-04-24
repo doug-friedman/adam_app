@@ -2,6 +2,6 @@ name: adam_app
 account: dougfriedman
 server: shinyapps.io
 appId: 87354
-bundleId: 391020
+bundleId: 431436
 url: https://dougfriedman.shinyapps.io/adam_app/
-when: 1457489223.4846
+when: 1461476193.70005
