@@ -200,7 +200,7 @@ shinyServer(function(input, output, session) {
       paste("Sample", "Template_Regression.csv", sep='')
     },
     content = function(file) {
-      write.csv(data.frame(x = faithful[1:10,1], x_range = iris[1:10,4], y=faithful[1:10,2], y_range = iris[1:10,4]), file, row.names=F)
+      write.csv(data.frame(x = faithful[1:10,1], x_dev = iris[1:10,4], y=faithful[1:10,2], y_dev = iris[1:10,4]), file, row.names=F)
     }
   )
   
