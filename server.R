@@ -103,20 +103,24 @@ shinyServer(function(input, output, session) {
   })
   
   reg_sim = function(data, nsim, force_origin){
+    progress = Progress$new()
+	progress$set(message = "Starting simulation", value = 0)
+	on.exit(progress$close())
     names(data) = c("x","x_range","y")
-    sim_data = matrix(nrow=nsim, ncol=length(data$x))
 
+	progress$set(message = "Simulating data", value = 0.3)
 	set.seed(7) # KEEPS IT RANDOM BUT REPRODUCIBLE
-	for(i in seq_along(data$x)){
-	  sim_data[,i] = runif(nsim, data[i,1] - data[i,2], data[i,1] + data[i,2])
-	}
+	gen_unif = function(vec, nsim){ runif(nsim, vec[1]-vec[2], vec[1] + vec[2])  }
+	
+	sim_data = apply(data[,c("x", "x_range")], 1, gen_unif, nsim=nsim)
+
 	
 	get_flm = function(x,y, origin=TRUE){  
       this.lm = fastLm(cbind(x,!origin), y) 
 	  return(c(unname(coef(this.lm)), this.lm$fitted))
 	}
 	
-	# Extracted R2 and RMSE functions directly from caret library because of shinyapps.io limit
+	# Extracted R2 and RMSE functions directly from caret library because of shinyapps.io size limit
 	R2 = function (pred, obs, formula = "corr", na.rm = FALSE) 
 		{
 			n <- sum(complete.cases(pred))
@@ -125,12 +129,15 @@ shinyServer(function(input, output, session) {
 				pred)^2, na.rm = na.rm)/((n - 1) * var(obs, na.rm = na.rm))))
 		}
 	RMSE = function (pred, obs, na.rm = FALSE) { sqrt(mean((pred - obs)^2, na.rm = na.rm)) }
+	
     MSWD = function(pred, obs){ sum((obs - pred)^2 / obs)/(length(obs)-1) }
 	
 	sim_sum = function(simmed){ return(round(c(mean(simmed), quantile(simmed, c(0.025, .975), names=F)),3)) }
 	
+	progress$set(message = "Fitting regressions", value = 0.5)
 	sim.res = apply(sim_data, 1, get_flm, y=data$y, force_origin) 
 
+	progress$set(message = "Summarizing simulation", value = 0.7)
 	coefs.sim = sim.res[c(1:2),] %>% apply(1, sim_sum)
 	fits = sim.res[-c(1:2),]
 
@@ -157,6 +164,7 @@ shinyServer(function(input, output, session) {
 			     ),
 	  res_sum = data.frame(slopes.sim, ints.sim, rsq.sim, rmse.sim, mswd.sim)
 	)
+	progress$set(message = "Sending data to charts and tables", value = 0.9)
     return(res)	
   }  
   

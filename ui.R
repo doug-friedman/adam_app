@@ -162,7 +162,7 @@ shinyUI(fluidPage(
 	mainPanel(
 	  h3("Regression Plot"), highchartOutput("dist_reg"), br(),
 	  h3("Simulation Results"), DT::dataTableOutput("table_reg"), br(),
-	  helpText("*Note: R-Squared values CANNOT be used to compare no-intercept and intercept models.", br(), "See", a(href="https://stats.stackexchange.com/questions/26176/removal-of-statistically-significant-intercept-term-increases-r2-in-linear-mo", "https://stats.stackexchange.com/questions/26176/removal-of-statistically-significant-intercept-term-increases-r2-in-linear-mo"), "for details."),
+	  helpText("*Note: R-Squared values CANNOT be used to compare no-intercept (those forced through the origin) and intercept models.", br(), "See", a(href="https://stats.stackexchange.com/questions/26176/removal-of-statistically-significant-intercept-term-increases-r2-in-linear-mo", "https://stats.stackexchange.com/questions/26176/removal-of-statistically-significant-intercept-term-increases-r2-in-linear-mo"), "for details."),
 	  br(), br()
 	)
 	))
