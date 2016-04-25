@@ -5,6 +5,7 @@ library(boot)
 library(RcppArmadillo)
 library(dplyr, warn.conflicts=F)
 source("std_error_helpers.R")
+source("gof_helpers.R")
 
 shinyServer(function(input, output, session) {
 
@@ -109,35 +110,21 @@ shinyServer(function(input, output, session) {
     names(data) = c("x","x_range","y")
 
 	progress$set(message = "Simulating data", value = 0.3)
-	set.seed(7) # KEEPS IT RANDOM BUT REPRODUCIBLE
-	gen_unif = function(vec, nsim){ runif(nsim, vec[1]-vec[2], vec[1] + vec[2])  }
 	
+	gen_unif = function(vec, nsim){ runif(nsim, vec[1]-vec[2], vec[1] + vec[2])  }
+	set.seed(7) # KEEPS IT RANDOM BUT REPRODUCIBLE
 	sim_data = apply(data[,c("x", "x_range")], 1, gen_unif, nsim=nsim)
 
-	
+	progress$set(message = "Fitting regressions", value = 0.5)
 	get_flm = function(x,y, origin=TRUE){  
       this.lm = fastLm(cbind(x,!origin), y) 
 	  return(c(unname(coef(this.lm)), this.lm$fitted))
 	}
-	
-	# Extracted R2 and RMSE functions directly from caret library because of shinyapps.io size limit
-	R2 = function (pred, obs, formula = "corr", na.rm = FALSE) 
-		{
-			n <- sum(complete.cases(pred))
-			switch(formula, corr = cor(obs, pred, use = ifelse(na.rm, 
-				"complete.obs", "everything"))^2, traditional = 1 - (sum((obs - 
-				pred)^2, na.rm = na.rm)/((n - 1) * var(obs, na.rm = na.rm))))
-		}
-	RMSE = function (pred, obs, na.rm = FALSE) { sqrt(mean((pred - obs)^2, na.rm = na.rm)) }
-	
-    MSWD = function(pred, obs){ sum((obs - pred)^2 / obs)/(length(obs)-1) }
-	
-	sim_sum = function(simmed){ return(round(c(mean(simmed), quantile(simmed, c(0.025, .975), names=F)),3)) }
-	
-	progress$set(message = "Fitting regressions", value = 0.5)
+
 	sim.res = apply(sim_data, 1, get_flm, y=data$y, force_origin) 
 
 	progress$set(message = "Summarizing simulation", value = 0.7)
+	sim_sum = function(simmed){ return(round(c(mean(simmed), quantile(simmed, c(0.025, .975), names=F)),3)) }
 	coefs.sim = sim.res[c(1:2),] %>% apply(1, sim_sum)
 	fits = sim.res[-c(1:2),]
 
