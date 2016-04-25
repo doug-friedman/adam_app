@@ -32,24 +32,24 @@ shinyServer(function(input, output, session) {
   
   
   clean_data_lm = reactive({
-    req(input$datafile_lm); req(input$x_col); req(input$xr_col); req(input$y_col); 
+    req(input$datafile_lm); req(input$x_col); req(input$xd_col); req(input$y_col); req(input$yd_col) 
 	datafile = input$datafile_lm
 
 	validate(
 	  need(substr(datafile$name, nchar(datafile$name)-3, nchar(datafile$name)) == ".csv", "Sorry, but the uploaded file could not be read. Please try using the template csv file.")
 	)
 
-	clean_data = read.csv(datafile$datapath, header=input$header, skip=input$skip_val)
-	clean_data = na.omit(clean_data[,c(input$x_col, input$xr_col, input$y_col)])
+	clean_data = read.csv(datafile$datapath)
+	clean_data = na.omit(clean_data[,c(input$x_col, input$xd_col, input$y_col, input$yd_col)])
 	
 	validate(
 	  need(class(clean_data[,1]) %in% c("numeric", "integer"), "Sorry, but the X data detected contained non-numeric information. Please try using the toggles on the left to focus on the numeric data."),
-	  need(class(clean_data[,2]) %in% c("numeric", "integer"), "Sorry, but the X range data detected contained non-numeric information. Please try using the toggles on the left to focus on the numeric data."),
-	  need(class(clean_data[,3]) %in% c("numeric", "integer"), "Sorry, but the Y data detected contained non-numeric information. Please try using the toggles on the left to focus on the numeric data.")
+	  need(class(clean_data[,2]) %in% c("numeric", "integer"), "Sorry, but the X deviation data detected contained non-numeric information. Please try using the toggles on the left to focus on the numeric data."),
+	  need(class(clean_data[,3]) %in% c("numeric", "integer"), "Sorry, but the Y data detected contained non-numeric information. Please try using the toggles on the left to focus on the numeric data."),
+	  need(class(clean_data[,4]) %in% c("numeric", "integer"), "Sorry, but the Y deviation data detected contained non-numeric information. Please try using the toggles on the left to focus on the numeric data.")
 	)
 	
 	return(reg_sim(clean_data, input$nsim, input$force_origin))
-	#return(clean_data)
   })  
   
   output$table_stats = DT::renderDataTable({
@@ -107,21 +107,27 @@ shinyServer(function(input, output, session) {
     progress = Progress$new()
 	progress$set(message = "Starting simulation", value = 0)
 	on.exit(progress$close())
-    names(data) = c("x","x_range","y")
+    names(data) = c("x","x_dev","y", "y_dev")
 
 	progress$set(message = "Simulating data", value = 0.3)
 	
-	gen_unif = function(vec, nsim){ runif(nsim, vec[1]-vec[2], vec[1] + vec[2])  }
+	gen_unif = function(vec, nsim){ runif(nsim, vec[1] - vec[2], vec[1] + vec[2])  }
 	set.seed(7) # KEEPS IT RANDOM BUT REPRODUCIBLE
-	sim_data = apply(data[,c("x", "x_range")], 1, gen_unif, nsim=nsim)
+	sim_x = apply(data[,c("x", "x_dev")], 1, gen_unif, nsim=nsim)
+	
+	set.seed(7) # KEEPS IT RANDOM BUT REPRODUCIBLE
+	sim_y = apply(data[,c("y", "y_dev")], 1, gen_unif, nsim=nsim)
+
+	sim_data = cbind(sim_x, sim_y)
 
 	progress$set(message = "Fitting regressions", value = 0.5)
-	get_flm = function(x,y, origin=TRUE){  
-      this.lm = fastLm(cbind(x,!origin), y) 
+    get_flm = function(vec, origin=TRUE){  
+	  x.i = c(1:(length(vec)/2))
+      this.lm = fastLm(cbind(vec[x.i],!origin), vec[-x.i]) 
 	  return(c(unname(coef(this.lm)), this.lm$fitted))
 	}
-
-	sim.res = apply(sim_data, 1, get_flm, y=data$y, force_origin) 
+	
+	sim.res = apply(sim_data, 1, get_flm, force_origin) 
 
 	progress$set(message = "Summarizing simulation", value = 0.7)
 	sim_sum = function(simmed){ return(round(c(mean(simmed), quantile(simmed, c(0.025, .975), names=F)),3)) }
@@ -157,27 +163,27 @@ shinyServer(function(input, output, session) {
   
   output$dist_reg = renderHighchart({
 	req(input$ci_method)
-	dataset = clean_data_lm()
-	dataset = dataset$res_data
-
+	out = clean_data_lm()
+	dataset = out$res_data
+	
 	#print(dataset)
 
 	# Each dataframe has to be laundered through list.parse3 
 	# with the columns assigned to the JS parameters
 	# except for the arearange chart which takes list.parse2
-	hc_data = list.parse3(data.frame(x=dataset$x, y=dataset$y))
-	hc_data2 = list.parse3(data.frame(x=dataset$x, y=dataset$coef_mean))
+	hc_data = data.frame(x=dataset$x, y=dataset$y) %>% list.parse3
+	hc_data2 = data.frame(x=dataset$x, y=dataset$coef_mean, x_dev=dataset$x_dev) %>% list.parse3
 	
 	lower = if(input$ci_method==2){ dataset$fit_lci } else { dataset$coef_lci }
 	upper = if(input$ci_method==2){ dataset$fit_uci } else { dataset$coef_uci }
 	hc_data3 = data.frame(x=dataset$x, lower, upper) %>% arrange(x) %>% list.parse2
 
-
 	highchart() %>%
 	  hc_add_series(data=hc_data, type="scatter", name="Original Data", color="#000") %>%
 	  hc_add_series(data=hc_data2, type="line", name="Regression Line", marker=list(enabled=FALSE), color="#214e6c") %>%
-	  hc_add_series(data=hc_data3, type="arearange", name="Bootstrapped 95% CI", fillOpacity=0.3, zIndex=1, dashStyle = "ShortDashDot") %>%
-	  hc_plotOptions(animation=FALSE)
+	  hc_add_series(data=hc_data3, type="arearange", name="Simulated 95% CI", fillOpacity=0.3, zIndex=1, dashStyle = "ShortDashDot") %>%
+	  hc_plotOptions(animation=FALSE) %>%
+	  hc_exporting(enabled = TRUE)
   })
   
   output$downloadTemplate = downloadHandler(
@@ -194,7 +200,7 @@ shinyServer(function(input, output, session) {
       paste("Sample", "Template_Regression.csv", sep='')
     },
     content = function(file) {
-      write.csv(data.frame(x = faithful[1:10,1], x_range = iris[1:10,4], y=faithful[1:10,2]), file, row.names=F)
+      write.csv(data.frame(x = faithful[1:10,1], x_range = iris[1:10,4], y=faithful[1:10,2], y_range = iris[1:10,4]), file, row.names=F)
     }
   )
   

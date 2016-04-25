@@ -123,14 +123,19 @@ shinyUI(fluidPage(
 			value = 1),
 			
 		  numericInput(
-			inputId = "xr_col",
-			label = "Which column contains the RANGE OF the indepndent variable or X?",
+			inputId = "xd_col",
+			label = "Which column contains the DEVIATION (+/-) OF the indepndent variable or X?",
 			value = 2),	
 			
 		  numericInput(
 			inputId = "y_col",
 			label = "Which column contains the dependent variable or Y?",
-			value = 3)
+			value = 3),
+			
+		  numericInput(
+			inputId = "yd_col",
+			label = "Which column contains the DEIVATION (+/-) OF dependent variable or Y?",
+			value = 4)
 		),
 	  numericInput(
 		inputId = "nsim",
