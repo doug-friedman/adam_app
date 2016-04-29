@@ -130,8 +130,9 @@ shinyServer(function(input, output, session) {
 	sim.res = apply(sim_data, 1, get_flm, force_origin) 
 
 	progress$set(message = "Summarizing simulation", value = 0.7)
-	sim_sum = function(simmed){ return(round(c(mean(simmed), quantile(simmed, c(0.025, .975), names=F)),3)) }
+	sim_sum = function(simmed){ return(round(c(mean(simmed), quantile(simmed, c(0.025, .975), names=F)),10)) }
 	coefs.sim = sim.res[c(1:2),] %>% apply(1, sim_sum)
+	print(coefs.sim)
 	fits = sim.res[-c(1:2),]
 
 	fit.rsq = apply(fits, 2, R2, obs=data$y)
@@ -148,12 +149,12 @@ shinyServer(function(input, output, session) {
 
 	res = list(
 	  res_data = cbind(data, 
-	                   coef_mean= round(slopes.sim[1]*data$x + ints.sim[1],3),
-	                   coef_lci = round(slopes.sim[2]*data$x + ints.sim[2],3),
-					   coef_uci = round(slopes.sim[3]*data$x + ints.sim[3],3),
-					   fit_mean = round(apply(fits, 1, mean),3),
-					   fit_lci = round(apply(fits, 1, quantile, .025),3),
-					   fit_uci = round(apply(fits, 1, quantile, .975),3)
+	                   coef_mean= round(slopes.sim[1]*data$x + ints.sim[1],10),
+	                   coef_lci = round(slopes.sim[2]*data$x + ints.sim[2],10),
+					   coef_uci = round(slopes.sim[3]*data$x + ints.sim[3],10),
+					   fit_mean = round(apply(fits, 1, mean),10),
+					   fit_lci = round(apply(fits, 1, quantile, .025),10),
+					   fit_uci = round(apply(fits, 1, quantile, .975),10)
 			     ),
 	  res_sum = data.frame(slopes.sim, ints.sim, rsq.sim, rmse.sim, mswd.sim)
 	)
