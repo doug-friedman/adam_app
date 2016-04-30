@@ -139,12 +139,17 @@ shinyUI(fluidPage(
 		),
 	  numericInput(
 		inputId = "nsim",
-		label = "How many simulations should be performed?",
+		label = "How many runs should be performed as part of the simulation?",
 		value = 1000),	
 
 	  checkboxInput(
 			 inputId = "force_origin",
 			 label = "Force the regression through the origin (0,0).",
+			 value = TRUE
+		   ), 
+	  checkboxInput(
+			 inputId = "boot_it",
+			 label = "Add bootstrapping to the simulation (induce variance through leaving a random observation out during each run of the simulation).",
 			 value = TRUE
 		   ), br(),	   
       radioButtons(

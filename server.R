@@ -49,7 +49,7 @@ shinyServer(function(input, output, session) {
 	  need(class(clean_data[,4]) %in% c("numeric", "integer"), "Sorry, but the Y deviation data detected contained non-numeric information. Please try using the toggles on the left to focus on the numeric data.")
 	)
 	
-	return(reg_sim(clean_data, input$nsim, input$force_origin))
+	return(reg_sim(clean_data, input$nsim, input$force_origin, input$boot_it))
   })  
   
   output$table_stats = DT::renderDataTable({
@@ -103,7 +103,7 @@ shinyServer(function(input, output, session) {
 	  
   })
   
-  reg_sim = function(data, nsim, force_origin){
+  reg_sim = function(data, nsim, force_origin, boot_it){
     progress = Progress$new()
 	progress$set(message = "Starting simulation", value = 0)
 	on.exit(progress$close())
@@ -121,18 +121,21 @@ shinyServer(function(input, output, session) {
 	sim_data = cbind(sim_x, sim_y)
 
 	progress$set(message = "Fitting regressions", value = 0.5)
-    get_flm = function(vec, origin=TRUE){  
+    get_flm = function(vec, origin=TRUE, boot_it=FALSE){  
 	  x.i = c(1:(length(vec)/2))
-      this.lm = fastLm(cbind(vec[x.i],!origin), vec[-x.i]) 
-	  return(c(unname(coef(this.lm)), this.lm$fitted))
+	  if(boot_it){  lo.i = sample(x.i, (length(vec)/2)-1) }
+	  x = vec[x.i]; y = vec[-x.i]
+      if(boot_it){ this.lm = fastLm(cbind(x[lo.i],!origin), y[lo.i])
+	  } else { this.lm = fastLm(cbind(x,!origin), y) }
+	  return(c(unname(coef(this.lm)), predict(this.lm, cbind(x, !origin))))
 	}
 	
-	sim.res = apply(sim_data, 1, get_flm, force_origin) 
+	set.seed(7) # KEEPS IT RANDOM BUT REPRODUCIBLE
+	sim.res = apply(sim_data, 1, get_flm, force_origin, boot_it) 
 
 	progress$set(message = "Summarizing simulation", value = 0.7)
 	sim_sum = function(simmed){ return(round(c(mean(simmed), quantile(simmed, c(0.025, .975), names=F)),10)) }
 	coefs.sim = sim.res[c(1:2),] %>% apply(1, sim_sum)
-	print(coefs.sim)
 	fits = sim.res[-c(1:2),]
 
 	fit.rsq = apply(fits, 2, R2, obs=data$y)
@@ -167,7 +170,7 @@ shinyServer(function(input, output, session) {
 	out = clean_data_lm()
 	dataset = out$res_data
 	
-	#print(dataset)
+	print(dataset)
 
 	# Each dataframe has to be laundered through list.parse3 
 	# with the columns assigned to the JS parameters
@@ -177,7 +180,9 @@ shinyServer(function(input, output, session) {
 	
 	lower = if(input$ci_method==2){ dataset$fit_lci } else { dataset$coef_lci }
 	upper = if(input$ci_method==2){ dataset$fit_uci } else { dataset$coef_uci }
-	hc_data3 = data.frame(x=dataset$x, lower, upper) %>% arrange(x) %>% list.parse2
+	hc_data3 = data.frame(x=dataset$x, lower, upper) %>% 
+	  group_by(x) %>% summarise(lower=min(lower), upper=max(upper)) %>%  # This addresses plotting multiple Ys per X for each bound
+	  list.parse2
 
 	highchart() %>%
 	  hc_add_series(data=hc_data, type="scatter", name="Original Data", color="#000") %>%
