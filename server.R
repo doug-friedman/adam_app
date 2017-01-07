@@ -170,7 +170,7 @@ shinyServer(function(input, output, session) {
 	out = clean_data_lm()
 	dataset = out$res_data
 	
-	print(dataset)
+	#print(dataset)
 
 	# Each dataframe has to be laundered through list.parse3 
 	# with the columns assigned to the JS parameters
